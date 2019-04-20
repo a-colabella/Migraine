@@ -6,7 +6,8 @@ from random import randint
 import copy
 
 SIZE = 25
-TICK = 20
+#TICK = 20
+TICK = 100 # Cheat mode
 BLOCK_SPEED = 0.125
 SHIP_SPEED = 0.5
 BULLET_SPEED = 1
@@ -52,6 +53,9 @@ class posn:
 
     def hitBottom(self):
         return self.y >= ((HEIGHT - SIZE) / SIZE)
+
+    def stacked(self, p):
+        return (self.x == p.x) and ((p.y - self.y) == 1)
     
 #
 class ship:
@@ -128,7 +132,10 @@ class block:
 
     def draw(self):
         pygame.draw.rect(screen, self.color, pygame.Rect(self.pos.x * SIZE, self.pos.y * SIZE, SIZE, SIZE))
-        
+
+    def hitAnother(self, b):
+        return self.pos.stacked(b.pos)
+    
 # 
 class tetromino:    
     def buildTetromino(self, letter, color, topLeft):
@@ -174,6 +181,7 @@ class tetromino:
     def __init__(self):
         startingX = randint(0, ((WIDTH - (SIZE * 2)) / SIZE))
         self.color = [randint(10,255), randint(10,255), randint(10,255)]
+        self.stopped = False
         blockType = randint(0,6)
 
         if blockType == 0:
@@ -194,14 +202,21 @@ class tetromino:
     def hitBottom(self):
         for b in self.bs:
             if b.hitBottom():
+                self.stopped = True
                 return True
 
+    def hitAnother(self, xs):
+        for b in self.bs:
+            for x in xs:
+                if b.hitAnother(x):
+                    self.stopped = True
+                    return True
+
+        return False
         
     def move(self):
-        # if it hasn't hit bottom yet
-        if (not self.hitBottom()):
-            for b in self.bs:
-                b.move()
+        for b in self.bs:
+            b.move()
 
     def draw(self):
         for b in self.bs:
@@ -210,6 +225,16 @@ class tetromino:
     #def push(self):
     #def rotate(self):
 
+def blockListify(x, ts):
+    blockList = []
+
+    for t in ts:
+        if t != x:
+            for b in t.bs:
+                blockList.append(b)
+
+    return blockList
+    
 #
 class bullet:
     def __init__(self, p, o):
@@ -248,7 +273,8 @@ class world:
             bullet.move()
 
         for t in self.ts:
-            t.move()
+            if ((not t.hitBottom()) and (not t.hitAnother(blockListify(t, self.ts)))):
+                t.move()
 
     def playerTurn(self, o):
         self.player.turn(o)
@@ -269,7 +295,7 @@ class world:
 
     def addTetromino(self):
         for t in self.ts:
-            if (not t.hitBottom()):
+            if (not t.stopped):
                 return
 
         self.ts.append(tetromino())
