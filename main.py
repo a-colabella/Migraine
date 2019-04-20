@@ -73,6 +73,9 @@ class fleet:
             ship.pos = prev_posn
             prev_posn = tmp
 
+    def turn(self, o):
+        self.ships[0].turn(o)
+
     def draw(self):
         for ship in self.ships:
             ship.draw()
@@ -121,20 +124,29 @@ class world:
     def move(self):
         self.player.move()
 
+    def playerTurn(self, o):
+        self.player.turn(o)
+
 # Create world
 theWorld = world()
 gameExit = False
 
 while not gameExit:
+    clock.tick(2)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             gameExit = True
-
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_UP: theWorld.playerTurn("up")
+            elif event.key == pygame.K_DOWN: theWorld.playerTurn("down")
+            elif event.key == pygame.K_LEFT: theWorld.playerTurn("left")
+            elif event.key == pygame.K_RIGHT: theWorld.playerTurn("right")
+    
     screen.fill((0,0,0))
     theWorld.move()
     theWorld.draw()
     pygame.display.flip()
-    clock.tick(1)
+    
         
 
 pygame.quit()
