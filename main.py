@@ -2,11 +2,14 @@
 # An arcade game that combines elements of
 # snake, tetris, space invaders, potentially more?
 import pygame
-import random
+from random import randint
 import copy
 
-SIZE = 50
-TICK = 10
+SIZE = 25
+TICK = 20
+BLOCK_SPEED = 0.125
+SHIP_SPEED = 0.5
+BULLET_SPEED = 1
 
 # Initialize
 pygame.init()
@@ -45,7 +48,10 @@ class posn:
         self.x = self.x + i
 
     def outOfBounds(self):
-        return self.x < 0 or self.x > ((WIDTH - 100)/ 50) or self.y < 0 or self.y > ((HEIGHT - 100)/ 50)
+        return self.x < 0 or self.x > ((WIDTH - SIZE)/ SIZE) or self.y < 0 or self.y > ((HEIGHT - SIZE)/ SIZE)
+
+    def hitBottom(self):
+        return self.y >= ((HEIGHT - SIZE) / SIZE)
     
 #
 class ship:
@@ -54,7 +60,7 @@ class ship:
         self.ori = o
 
     def move(self):
-        eval('self.pos.' + self.ori + '(1)')
+        eval('self.pos.' + self.ori + '(' + str(SHIP_SPEED) + ')')
 
     def turn(self, o):
         if o == "left":
@@ -114,21 +120,95 @@ class block:
         self.pos = p
         self.color = c
 
-# 
-class tetromino:
-    def __init__(self, p, o, s):
-        self.ori = o
-        self.shape = t
+    def move(self):
+        eval('self.pos.down(' + str(BLOCK_SPEED) + ')')
 
-    def turn(self, o):
-        if o == "left":
-            self.ori = "left"
-        elif o == "right":
-            self.ori = "right"
-        elif o == "up":
-            self.ori = "up"
-        elif o == "down":
-            self.ori = "down"
+    def hitBottom(self):
+        return self.pos.hitBottom()
+
+    def draw(self):
+        pygame.draw.rect(screen, self.color, pygame.Rect(self.pos.x * SIZE, self.pos.y * SIZE, SIZE, SIZE))
+        
+# 
+class tetromino:    
+    def buildTetromino(self, letter, color, topLeft):
+        tetromino = []
+        if letter == "O":
+            tetromino.append(block(posn(topLeft, -2), color))
+            tetromino.append(block(posn(topLeft, -1), color))
+            tetromino.append(block(posn(topLeft + 1, -2), color))
+            tetromino.append(block(posn(topLeft + 1, -1), color))
+        elif letter == "I":
+            tetromino.append(block(posn(topLeft, -4), color))
+            tetromino.append(block(posn(topLeft, -3), color))
+            tetromino.append(block(posn(topLeft, -2), color))
+            tetromino.append(block(posn(topLeft, -1), color))
+        elif letter == "L":
+            tetromino.append(block(posn(topLeft, -3), color))
+            tetromino.append(block(posn(topLeft, -2), color))
+            tetromino.append(block(posn(topLeft, -1), color))
+            tetromino.append(block(posn(topLeft + 1, -1), color))
+        elif letter == "J":
+            tetromino.append(block(posn(topLeft + 1, -3), color))
+            tetromino.append(block(posn(topLeft + 1, -2), color))
+            tetromino.append(block(posn(topLeft + 1, -1), color))
+            tetromino.append(block(posn(topLeft, -1), color))
+        elif letter == "Z":
+            tetromino.append(block(posn(topLeft + 1, -3), color))
+            tetromino.append(block(posn(topLeft + 1, -2), color))
+            tetromino.append(block(posn(topLeft, -2), color))
+            tetromino.append(block(posn(topLeft, -1), color))
+        elif letter == "S":
+            tetromino.append(block(posn(topLeft, -3), color))
+            tetromino.append(block(posn(topLeft, -2), color))
+            tetromino.append(block(posn(topLeft + 1, -2), color))
+            tetromino.append(block(posn(topLeft + 1, -1), color))
+        elif letter == "T":
+            tetromino.append(block(posn(topLeft, -3), color))
+            tetromino.append(block(posn(topLeft, -2), color))
+            tetromino.append(block(posn(topLeft, -1), color))
+            tetromino.append(block(posn(topLeft + 1, -2), color))
+
+        return tetromino
+
+    def __init__(self):
+        startingX = randint(0, ((WIDTH - (SIZE * 2)) / SIZE))
+        self.color = [randint(10,255), randint(10,255), randint(10,255)]
+        blockType = randint(0,6)
+
+        if blockType == 0:
+            self.bs = self.buildTetromino("O", self.color, startingX)
+        elif blockType == 1:
+            self.bs = self.buildTetromino("I", self.color, startingX)
+        elif blockType == 2:
+            self.bs = self.buildTetromino("L", self.color, startingX)
+        elif blockType == 3:
+            self.bs = self.buildTetromino("J", self.color, startingX)
+        elif blockType == 4:
+            self.bs = self.buildTetromino("Z", self.color, startingX)
+        elif blockType == 5:
+            self.bs = self.buildTetromino("S", self.color, startingX)
+        elif blockType == 6:
+            self.bs = self.buildTetromino("T", self.color, startingX)
+            
+    def hitBottom(self):
+        for b in self.bs:
+            if b.hitBottom():
+                return True
+
+        
+    def move(self):
+        # if it hasn't hit bottom yet
+        if (not self.hitBottom()):
+            for b in self.bs:
+                b.move()
+
+    def draw(self):
+        for b in self.bs:
+            b.draw()
+
+    #def push(self):
+    #def rotate(self):
 
 #
 class bullet:
@@ -137,7 +217,7 @@ class bullet:
         self.ori = o
 
     def move(self):
-        eval('self.pos.' + self.ori + '(2)')
+        eval('self.pos.' + self.ori + '(' + str(BULLET_SPEED) + ')')
 
     def draw(self):
         pygame.draw.rect(screen, (255, 0, 0), pygame.Rect(((self.pos.x * SIZE) + (SIZE / 4)), ((self.pos.y * SIZE) + (SIZE / 4)), (SIZE / 2), (SIZE / 2)))
@@ -145,13 +225,11 @@ class bullet:
     def isDead(self):
         return self.pos.outOfBounds()
 
-    
-
 class world:
     def __init__(self):
         ship1 = ship(posn(0,0), "down")
         self.bullets = []
-        self.ts = []
+        self.ts = [tetromino()]
         self.player = fleet([ship1])
 
     def draw(self):
@@ -160,11 +238,17 @@ class world:
         for bullet in self.bullets:
             bullet.draw()
 
+        for t in self.ts:
+            t.draw()
+
     def move(self):
         self.player.move()
 
         for bullet in self.bullets:
             bullet.move()
+
+        for t in self.ts:
+            t.move()
 
     def playerTurn(self, o):
         self.player.turn(o)
@@ -182,6 +266,13 @@ class world:
         for bullet in self.bullets:
             if bullet.isDead():
                 self.bullets.remove(bullet)
+
+    def addTetromino(self):
+        for t in self.ts:
+            if (not t.hitBottom()):
+                return
+
+        self.ts.append(tetromino())
 
 # Create world
 theWorld = world()
@@ -204,6 +295,7 @@ while not gameOver:
     else:
         # Remove dead bullets
         theWorld.rmDeadBullets()
+        theWorld.addTetromino()
         
         screen.fill((0,0,0))
         theWorld.move()
