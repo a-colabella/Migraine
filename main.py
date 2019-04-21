@@ -6,11 +6,11 @@ from random import randint
 import copy
 
 SIZE = 25
-#TICK = 20
-TICK = 100 # Cheat mode
-BLOCK_SPEED = 0.125
-SHIP_SPEED = 0.5
-BULLET_SPEED = 1
+TICK = 5
+#TICK = 100 # Cheat mode
+BLOCK_SPEED = 1
+SHIP_SPEED = 1
+BULLET_SPEED = 2
 
 # Initialize
 pygame.init()
@@ -18,7 +18,7 @@ pygame.init()
 # Display
 winfo = pygame.display.Info()
 #WIDTH, HEIGHT = (winfo.current_w / 2, winfo.current_h)
-WIDTH, HEIGHT = (950, 950)
+WIDTH, HEIGHT = (500, 950)
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
 clock = pygame.time.Clock()
@@ -33,8 +33,19 @@ class posn:
         self.x = x
         self.y = y
 
-    def collision(self, p):
-        return self.x == p.x and self.y == p.y
+    def against(self, p, o):
+        xDiff = self.x - p.x
+        yDiff = self.y - p.y
+        if abs(xDiff) <= 1 and yDiff == 0 and o == "down":
+            return True
+        elif abs(xDiff) <= 1 and yDiff == 0 and o == "up":
+            return True
+        elif xDiff == 0 and abs(yDiff) <= 1 and o == "left":
+            return True
+        elif xDiff == 0 and abs(yDiff) <= 1 and o == "right":
+            return True
+        else:
+            return False
 
     def up(self, i):
         self.y = self.y - i
@@ -88,6 +99,13 @@ class ship:
     def getPos(self):
         return copy.copy(self.pos)
 
+    def against(self, t):
+        for b in t.bs:
+            if self.pos.against(b.pos, self.ori):
+                return True
+
+        return False
+
 #
 class fleet:
     def __init__(self, xs):
@@ -135,6 +153,9 @@ class block:
 
     def hitAnother(self, b):
         return self.pos.stacked(b.pos)
+
+    def push(self, ori):
+        eval('self.pos.' + ori + '(' + str(SHIP_SPEED) + ')')
     
 # 
 class tetromino:    
@@ -222,7 +243,10 @@ class tetromino:
         for b in self.bs:
             b.draw()
 
-    #def push(self):
+    def push(self, ori):
+        for b in self.bs:
+            b.push(ori)
+            
     #def rotate(self):
 
 def blockListify(x, ts):
@@ -256,6 +280,7 @@ class world:
         self.bullets = []
         self.ts = [tetromino()]
         self.player = fleet([ship1])
+        self.blockClock = -1
 
     def draw(self):
         self.player.draw()
@@ -273,11 +298,20 @@ class world:
             bullet.move()
 
         for t in self.ts:
-            if ((not t.hitBottom()) and (not t.hitAnother(blockListify(t, self.ts)))):
+            if (self.player.ships[0].against(t)):
+                t.push(self.player.ships[0].getOri())
+            elif ((not t.hitBottom()) and (not t.hitAnother(blockListify(t, self.ts))) and self.blockClock == 0):
                 t.move()
+                
 
     def playerTurn(self, o):
         self.player.turn(o)
+
+    def blockTick(self):
+        if (self.blockClock == 3):
+            self.blockClock = 0
+        else:
+            self.blockClock = self.blockClock + 1
 
     def collision(self):
         return self.player.hitWall()
@@ -306,6 +340,7 @@ gameOver = False
 
 while not gameOver:
     clock.tick(TICK)
+    theWorld.blockTick()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             gameOver = True
