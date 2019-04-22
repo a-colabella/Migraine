@@ -1,2 +1,2 @@
 # Migraine
-A game in python that combines arcade-style games such as snake, space invaders, tetris, and centipede.
+Arcade game that combines snake, tetris, and space invaders, written in Python.

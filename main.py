@@ -1,6 +1,7 @@
 # Migraine
 # An arcade game that combines elements of
 # snake, tetris, space invaders, potentially more?
+# by Andrew Colabella
 import pygame
 from random import randint
 import copy
@@ -148,9 +149,9 @@ class Tetromino:
             [[0,0,1,1], [0,0,1,0], [0,0,1,1], [0,0,1,0]],
             [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]],
 
-        "L": [[[0,0,0,0], [0,0,5,0], [0,0,0,5], [0,5,5,0]],
-            [[0,5,5,5], [0,0,5,0], [0,5,5,5], [0,0,5,0]],
-            [[0,5,0,0], [0,0,5,5], [0,0,0,0], [0,0,5,0]],
+        "L": [[[0,0,0,0], [0,0,1,0], [0,0,0,1], [0,1,1,0]],
+            [[0,1,1,1], [0,0,1,0], [0,1,1,1], [0,0,1,0]],
+            [[0,1,0,0], [0,0,1,1], [0,0,0,0], [0,0,1,0]],
             [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]],
 
         "J": [[[0,0,0,0], [0,0,1,1], [0,1,0,0], [0,0,1,0]],
@@ -162,7 +163,7 @@ class Tetromino:
             [[0,1,1,1], [0,0,1,1], [0,1,1,1], [0,1,1,0]],
             [[0,0,1,0], [0,0,1,0], [0,0,0,0], [0,0,1,0]],
             [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]]
-    };
+    }
 
     def buildHelper(self, xs, color, topLeftX, topLeftY):
         tetromino = []
@@ -174,7 +175,6 @@ class Tetromino:
 
         return tetromino
         
-        
     def build(self, letter, color, topLeftX, topLeftY, rot):
         helper = []
         helper.append(self.shapes[letter][0][rot])
@@ -185,15 +185,15 @@ class Tetromino:
         return self.buildHelper(helper, color, topLeftX, topLeftY)
 
     def __init__(self):
-        startingX = randint(1, ((WIDTH - (SIZE * 4)) / SIZE))
+        startingX = randint(1, ((WIDTH - (SIZE * 5)) / SIZE))
         startingY = -3
         self.startPosn = Posn(startingX, startingY)
-        self.color = [randint(10,255), randint(10,255), randint(10,255)]
+        self.color = [randint(100,255), randint(100,255), randint(100,255)]
         self.stopped = False
         self.blockType = self.letters[randint(0,6)]
         self.rotation = 0
         self.bs = self.build(self.blockType, self.color, startingX, startingY, self.rotation)
-            
+                    
     def hitBottom(self):
         for b in self.bs:
             if b.hitBottom():
@@ -342,7 +342,6 @@ class World:
         for t in self.ts:
             if (not t.stopped):
                 return
-
         self.ts.append(Tetromino())
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
