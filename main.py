@@ -17,6 +17,9 @@ class Posn:
         self.x = x
         self.y = y
 
+    def equals(self, p):
+        return self.x == p.x and self.y == p.y
+
     def up(self, i):
         self.y = self.y - i
 
@@ -182,8 +185,9 @@ class Tetromino:
         return self.buildHelper(helper, color, topLeftX, topLeftY)
 
     def __init__(self):
-        startingX = randint(0, ((WIDTH - (SIZE * 4)) / SIZE))
+        startingX = randint(1, ((WIDTH - (SIZE * 4)) / SIZE))
         startingY = -3
+        self.startPosn = Posn(startingX, startingY)
         self.color = [randint(10,255), randint(10,255), randint(10,255)]
         self.stopped = False
         self.blockType = self.letters[randint(0,6)]
@@ -213,6 +217,7 @@ class Tetromino:
         return False
         
     def move(self):
+        eval('self.startPosn.down(' + str(BLOCK_SPEED) + ')')
         for b in self.bs:
             b.move()
 
@@ -221,8 +226,20 @@ class Tetromino:
             b.draw()
 
     def push(self, ori):
+        eval('self.startPosn.'+ ori +'(' + str(BLOCK_SPEED) + ')')
         for b in self.bs:
             b.push(ori)
+
+    def shot(self, p):
+        for b in self.bs:
+            if p.equals(b.pos):
+                return True
+
+        return False
+
+    def rotate(self):
+        self.rotation = self.rotation + 1
+        self.bs = self.build(self.blockType, self.color, self.startPosn.x, self.startPosn.y, self.rotation % 4)
 
 
 def blockListify(x, ts):
@@ -308,6 +325,14 @@ class World:
         eval('bPos.' + bOrientation  + '(1)')
         self.bullets.append(Bullet(bPos, bOrientation))
 
+    def rotate(self):
+        for t in self.ts:
+            if (not t.stopped):
+                for bullet in self.bullets:
+                    if t.shot(bullet.pos):
+                        t.rotate()
+                        self.bullets.remove(bullet)
+
     def removeBullet(self):
         for bullet in self.bullets:
             if bullet.isDead():
@@ -365,7 +390,7 @@ class App:
             if (keys[pygame.K_ESCAPE]):
                 self.gameOver = True
 
-            
+            self.world.rotate()    
             self.world.addTetromino()
             self.world.move()
             screen.fill((0,0,0))
