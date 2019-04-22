@@ -123,66 +123,72 @@ class Block:
         eval('self.pos.' + ori + '(' + str(SHIP_SPEED) + ')')
 
 class Tetromino:
-    def build(self, letter, color, topLeft):
+    letters = ["O", "I", "S", "Z", "L", "J", "T"]
+    shapes = {
+        "O": [[[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]],
+            [[0,1,1,0], [0,1,1,0], [0,1,1,0], [0,1,1,0]],
+            [[0,1,1,0], [0,1,1,0], [0,1,1,0], [0,1,1,0]],
+            [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]],
+
+        "I": [[[0,0,0,0], [0,0,1,0], [0,0,0,0], [0,0,1,0]],
+            [[1,1,1,1], [0,0,1,0], [1,1,1,1], [0,0,1,0]],
+            [[0,0,0,0], [0,0,1,0], [0,0,0,0], [0,0,1,0]],
+            [[0,0,0,0], [0,0,1,0], [0,0,0,0], [0,0,1,0]]],
+
+        "S": [[[0,0,0,0], [0,0,1,0], [0,0,0,0], [0,0,1,0]],
+            [[0,0,1,1], [0,0,1,1], [0,0,1,1], [0,0,1,1]],
+            [[0,1,1,0], [0,0,0,1], [0,1,1,0], [0,0,0,1]],
+            [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]],
+
+        "Z": [[[0,0,0,0], [0,0,0,1], [0,0,0,0], [0,0,0,1]],
+            [[0,1,1,0], [0,0,1,1], [0,1,1,0], [0,0,1,1]],
+            [[0,0,1,1], [0,0,1,0], [0,0,1,1], [0,0,1,0]],
+            [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]],
+
+        "L": [[[0,0,0,0], [0,0,5,0], [0,0,0,5], [0,5,5,0]],
+            [[0,5,5,5], [0,0,5,0], [0,5,5,5], [0,0,5,0]],
+            [[0,5,0,0], [0,0,5,5], [0,0,0,0], [0,0,5,0]],
+            [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]],
+
+        "J": [[[0,0,0,0], [0,0,1,1], [0,1,0,0], [0,0,1,0]],
+            [[0,1,1,1], [0,0,1,0], [0,1,1,1], [0,0,1,0]],
+            [[0,0,0,1], [0,0,1,0], [0,0,0,0], [0,1,1,0]],
+            [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]],
+
+        "T": [[[0,0,0,0], [0,0,1,0], [0,0,1,0], [0,0,1,0]],
+            [[0,1,1,1], [0,0,1,1], [0,1,1,1], [0,1,1,0]],
+            [[0,0,1,0], [0,0,1,0], [0,0,0,0], [0,0,1,0]],
+            [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]]
+    };
+
+    def buildHelper(self, xs, color, topLeftX, topLeftY):
         tetromino = []
-        if letter == "O":
-            tetromino.append(Block(Posn(topLeft, -2), color))
-            tetromino.append(Block(Posn(topLeft, -1), color))
-            tetromino.append(Block(Posn(topLeft + 1, -2), color))
-            tetromino.append(Block(Posn(topLeft + 1, -1), color))
-        elif letter == "I":
-            tetromino.append(Block(Posn(topLeft, -4), color))
-            tetromino.append(Block(Posn(topLeft, -3), color))
-            tetromino.append(Block(Posn(topLeft, -2), color))
-            tetromino.append(Block(Posn(topLeft, -1), color))
-        elif letter == "L":
-            tetromino.append(Block(Posn(topLeft, -3), color))
-            tetromino.append(Block(Posn(topLeft, -2), color))
-            tetromino.append(Block(Posn(topLeft, -1), color))
-            tetromino.append(Block(Posn(topLeft + 1, -1), color))
-        elif letter == "J":
-            tetromino.append(Block(Posn(topLeft + 1, -3), color))
-            tetromino.append(Block(Posn(topLeft + 1, -2), color))
-            tetromino.append(Block(Posn(topLeft + 1, -1), color))
-            tetromino.append(Block(Posn(topLeft, -1), color))
-        elif letter == "Z":
-            tetromino.append(Block(Posn(topLeft + 1, -3), color))
-            tetromino.append(Block(Posn(topLeft + 1, -2), color))
-            tetromino.append(Block(Posn(topLeft, -2), color))
-            tetromino.append(Block(Posn(topLeft, -1), color))
-        elif letter == "S":
-            tetromino.append(Block(Posn(topLeft, -3), color))
-            tetromino.append(Block(Posn(topLeft, -2), color))
-            tetromino.append(Block(Posn(topLeft + 1, -2), color))
-            tetromino.append(Block(Posn(topLeft + 1, -1), color))
-        elif letter == "T":
-            tetromino.append(Block(Posn(topLeft, -3), color))
-            tetromino.append(Block(Posn(topLeft, -2), color))
-            tetromino.append(Block(Posn(topLeft, -1), color))
-            tetromino.append(Block(Posn(topLeft + 1, -2), color))
+
+        for i in range(0, len(xs)):
+            for j in range (0, len(xs[i])):
+                if xs[i][j] == 1:
+                    tetromino.append(Block(Posn(topLeftX + j, topLeftY + i), color))
 
         return tetromino
+        
+        
+    def build(self, letter, color, topLeftX, topLeftY, rot):
+        helper = []
+        helper.append(self.shapes[letter][0][rot])
+        helper.append(self.shapes[letter][1][rot])
+        helper.append(self.shapes[letter][2][rot])
+        helper.append(self.shapes[letter][3][rot])
+
+        return self.buildHelper(helper, color, topLeftX, topLeftY)
 
     def __init__(self):
-        startingX = randint(0, ((WIDTH - (SIZE * 2)) / SIZE))
+        startingX = randint(0, ((WIDTH - (SIZE * 4)) / SIZE))
+        startingY = -3
         self.color = [randint(10,255), randint(10,255), randint(10,255)]
         self.stopped = False
-        blockType = randint(0,6)
-
-        if blockType == 0:
-            self.bs = self.build("O", self.color, startingX)
-        elif blockType == 1:
-            self.bs = self.build("I", self.color, startingX)
-        elif blockType == 2:
-            self.bs = self.build("L", self.color, startingX)
-        elif blockType == 3:
-            self.bs = self.build("J", self.color, startingX)
-        elif blockType == 4:
-            self.bs = self.build("Z", self.color, startingX)
-        elif blockType == 5:
-            self.bs = self.build("S", self.color, startingX)
-        elif blockType == 6:
-            self.bs = self.build("T", self.color, startingX)
+        self.blockType = self.letters[randint(0,6)]
+        self.rotation = 0
+        self.bs = self.build(self.blockType, self.color, startingX, startingY, self.rotation)
             
     def hitBottom(self):
         for b in self.bs:
@@ -217,6 +223,7 @@ class Tetromino:
     def push(self, ori):
         for b in self.bs:
             b.push(ori)
+
 
 def blockListify(x, ts):
     blockList = []
