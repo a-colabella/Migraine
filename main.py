@@ -241,6 +241,10 @@ class Tetromino:
         self.rotation = self.rotation + 1
         self.bs = self.build(self.blockType, self.color, self.startPosn.x, self.startPosn.y, self.rotation % 4)
 
+    def slam(self, xs):
+        while (not self.hitBottom() and not self.hitAnother(xs)):
+            self.move()
+
 
 def blockListify(x, ts):
     blockList = []
@@ -333,6 +337,11 @@ class World:
                         t.rotate()
                         self.bullets.remove(bullet)
 
+    def slam(self):
+        for t in self.ts:
+            if (not t.stopped):
+                t.slam(blockListify(t, self.ts))
+
     def removeBullet(self):
         for bullet in self.bullets:
             if bullet.isDead():
@@ -388,6 +397,8 @@ class App:
                 self.world.shoot()
             if (keys[pygame.K_ESCAPE]):
                 self.gameOver = True
+            if (keys[pygame.K_LSHIFT]):
+                self.world.slam()
 
             self.world.rotate()    
             self.world.addTetromino()
