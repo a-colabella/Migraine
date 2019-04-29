@@ -8,7 +8,7 @@ import copy
 
 WIDTH, HEIGHT = (500, 950)
 SIZE = 25
-TICK = 10
+TICK = 15
 BLOCK_SPEED = 1
 SHIP_SPEED = 1
 BULLET_SPEED = 1
@@ -58,6 +58,15 @@ class Posn:
             return True
         else:
             return False
+
+class Fruit:
+    def __init__(self):
+        self.pos = Posn(randint(1, ((WIDTH - (SIZE * 2)) / SIZE)), randint(1, ((HEIGHT - (SIZE * 2)) / SIZE)))
+        print(self.pos.x)
+        print(self.pos.y)
+
+    def draw(self):
+        pygame.draw.circle(screen, (255, 0, 0), (self.pos.x * SIZE - (SIZE / 2), self.pos.y * SIZE - (SIZE / 2)), SIZE / 2)
 
 class Ship:
     def __init__(self, p, o):
@@ -276,6 +285,7 @@ class World:
         self.bullets = []
         self.ts = [Tetromino()]
         self.player = [Ship(Posn(0,0), "down")]
+        self.fs = [Fruit()]
         self.blockClock = 0
         self.snakeClock = 0
 
@@ -288,6 +298,9 @@ class World:
 
         for t in self.ts:
             t.draw()
+
+        for f in self.fs:
+            f.draw()
 
     def move(self):
         if (self.snakeClock == 0):
@@ -305,6 +318,7 @@ class World:
                         t.push(self.player[0].getOri())
                 elif ((not t.hitBottom()) and (not t.hitAnother(blockListify(t, self.ts))) and self.blockClock == 0):
                     t.move()
+
 
     def playerTurn(self, o):
         self.player[0].turn(o)
@@ -329,13 +343,16 @@ class World:
         eval('bPos.' + bOrientation  + '(1)')
         self.bullets.append(Bullet(bPos, bOrientation))
 
+    def slide(self, ori):
+        for t in self.ts:
+            if (not t.stopped and not t.walled(ori)):
+                t.push(ori)
+
     def rotate(self):
         for t in self.ts:
             if (not t.stopped):
-                for bullet in self.bullets:
-                    if t.shot(bullet.pos):
-                        t.rotate()
-                        self.bullets.remove(bullet)
+                t.rotate()
+
 
     def slam(self):
         for t in self.ts:
@@ -393,14 +410,23 @@ class App:
                 self.world.playerTurn("up")
             if (keys[pygame.K_DOWN]):
                 self.world.playerTurn("down")
-            if (keys[pygame.K_SPACE]):
-                self.world.shoot()
+            if (keys[pygame.K_w]):
+                self.world.rotate()
+            if (keys[pygame.K_a]):
+                self.world.slide("left")
+            if (keys[pygame.K_s]):
+                self.world.slide("down")
+            if (keys[pygame.K_d]):
+                self.world.slide("right")
+            #if (keys[pygame.K_SPACE]):
+                #self.world.shoot()
             if (keys[pygame.K_ESCAPE]):
                 self.gameOver = True
-            if (keys[pygame.K_LSHIFT]):
-                self.world.slam()
 
-            self.world.rotate()    
+            for event in pygame.event.get():
+                    if event.type == pygame.KEYUP and (event.key == pygame.K_LSHIFT or event.key == pygame.K_RSHIFT):
+                        self.world.slam()
+                                
             self.world.addTetromino()
             self.world.move()
             screen.fill((0,0,0))
