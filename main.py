@@ -59,11 +59,21 @@ class Posn:
         else:
             return False
 
+    def trail(self, o):
+        if o == "down":
+            self.up(1)
+        elif o == "up":
+            self.down(1)
+        elif o == "left":
+            self.right(1)
+        elif o == "right":
+            self.left(1)
+
+        return self
+
 class Fruit:
     def __init__(self):
         self.pos = Posn(randint(1, ((WIDTH - (SIZE * 2)) / SIZE)), randint(1, ((HEIGHT - (SIZE * 2)) / SIZE)))
-        print(self.pos.x)
-        print(self.pos.y)
 
     def draw(self):
         pygame.draw.circle(screen, (255, 0, 0), (self.pos.x * SIZE - (SIZE / 2), self.pos.y * SIZE - (SIZE / 2)), SIZE / 2)
@@ -111,6 +121,9 @@ class Ship:
                 return True
 
         return False
+
+    def ateFruit(self, f):
+        return self.pos.equals(f.pos)
 
 class Block:
     def __init__(self, p, c):
@@ -285,7 +298,7 @@ class World:
         self.bullets = []
         self.ts = [Tetromino()]
         self.player = [Ship(Posn(0,0), "down")]
-        self.fs = [Fruit()]
+        self.f = Fruit()
         self.blockClock = 0
         self.snakeClock = 0
 
@@ -299,12 +312,17 @@ class World:
         for t in self.ts:
             t.draw()
 
-        for f in self.fs:
-            f.draw()
+        self.f.draw()
 
     def move(self):
         if (self.snakeClock == 0):
+            prevPos = self.player[0].getPos()
             self.player[0].move()
+            
+            for i in range(1, len(self.player)):
+                temp = self.player[i].getPos()
+                self.player[i].pos = prevPos
+                prevPos = temp                
 
         for bullet in self.bullets:
             bullet.move()
@@ -321,7 +339,8 @@ class World:
 
 
     def playerTurn(self, o):
-        self.player[0].turn(o)
+        for p in self.player:
+            p.turn(o)
 
     def blockTick(self):
         if (self.blockClock == 7):
@@ -369,6 +388,15 @@ class World:
             if (not t.stopped):
                 return
         self.ts.append(Tetromino())
+
+    def grow(self):
+        if (self.player[0].ateFruit(self.f)):
+            print("ate")
+            lastP = self.player[len(self.player) - 1]
+            lastPos = lastP.getPos()
+            lastOri = lastP.getOri()
+            self.player.append(Ship(lastPos.trail(lastOri), lastOri))
+            self.f = Fruit()
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
@@ -422,12 +450,13 @@ class App:
                 #self.world.shoot()
             if (keys[pygame.K_ESCAPE]):
                 self.gameOver = True
-
+                
             for event in pygame.event.get():
                     if event.type == pygame.KEYUP and (event.key == pygame.K_LSHIFT or event.key == pygame.K_RSHIFT):
                         self.world.slam()
                                 
             self.world.addTetromino()
+            self.world.grow()
             self.world.move()
             screen.fill((0,0,0))
             self.world.draw()
