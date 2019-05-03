@@ -346,6 +346,14 @@ class World:
         for p in self.player:
             p.turn(o)
 
+    def hitSelf(self):
+        headPosn = self.player[0].getPos()
+        for i in range(1, len(self.player)):
+            if headPosn.equals(self.player[i].pos):
+                return True
+
+        return False            
+
     def blockTick(self):
         if (self.blockClock == 7):
             self.blockClock = 0
@@ -358,7 +366,7 @@ class World:
             self.snakeClock = 1
 
     def dead(self):
-        return (self.player[0].outOfBounds() or self.player[0].hitStoppedPiece(self.ts))
+        return self.player[0].outOfBounds() or self.player[0].hitStoppedPiece(self.ts) or self.hitSelf()
 
     def shoot(self):
         bOrientation = self.player[0].getOri()
