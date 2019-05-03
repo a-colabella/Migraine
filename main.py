@@ -71,6 +71,10 @@ class Posn:
 
         return self
 
+    def ate(self, p):
+        return self.x == (p.x - 1) and self.y == (p.y - 1)
+        
+
 class Fruit:
     def __init__(self):
         self.pos = Posn(randint(1, ((WIDTH - (SIZE * 2)) / SIZE)), randint(1, ((HEIGHT - (SIZE * 2)) / SIZE)))
@@ -123,7 +127,7 @@ class Ship:
         return False
 
     def ateFruit(self, f):
-        return self.pos.equals(f.pos)
+        return self.pos.ate(f.pos)
 
 class Block:
     def __init__(self, p, c):
@@ -391,7 +395,6 @@ class World:
 
     def grow(self):
         if (self.player[0].ateFruit(self.f)):
-            print("ate")
             lastP = self.player[len(self.player) - 1]
             lastPos = lastP.getPos()
             lastOri = lastP.getOri()
