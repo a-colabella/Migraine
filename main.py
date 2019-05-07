@@ -72,8 +72,7 @@ class Posn:
         return self
 
     def ate(self, p):
-        return self.x == (p.x - 1) and self.y == (p.y - 1)
-        
+        return self.x == (p.x - 1) and self.y == (p.y - 1)        
 
 class Fruit:
     def __init__(self):
@@ -271,6 +270,13 @@ class Tetromino:
         while (not self.hitBottom() and not self.hitAnother(xs)):
             self.move()
 
+    def hitPlayer(self, p):
+        for b in self.bs:
+            if b.pos.equals(p.pos):
+                return True
+
+        return False
+
 
 def blockListify(x, ts):
     blockList = []
@@ -384,7 +390,6 @@ class World:
             if (not t.stopped):
                 t.rotate()
 
-
     def slam(self):
         for t in self.ts:
             if (not t.stopped):
@@ -408,6 +413,18 @@ class World:
             lastOri = lastP.getOri()
             self.player.append(Ship(lastPos.trail(lastOri), lastOri))
             self.f = Fruit()
+
+    def shrink(self, i):
+        k = i - 1
+        self.player = self.player[0:k]
+
+    def crash(self):
+        for t in self.ts:
+            if (not t.stopped):
+                for i in range(0, len(self.player)):
+                    if (t.hitPlayer(self.player[i])):
+                        self.shrink(i)
+                        return
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
@@ -468,6 +485,7 @@ class App:
                                 
             self.world.addTetromino()
             self.world.grow()
+            self.world.crash()
             self.world.move()
             screen.fill((0,0,0))
             self.world.draw()
